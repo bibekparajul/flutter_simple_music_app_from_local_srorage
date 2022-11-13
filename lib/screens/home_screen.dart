@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:musicme/screens/play_screen.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:just_audio/just_audio.dart';
 
 //ignore_for_file:prefer_const_constructors
 
@@ -14,21 +18,31 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _audioQuery = new OnAudioQuery();
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
-@override
+// songs starts playing here
+
+  playSongs(String? uri) {
+    try {
+      _audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(uri!)));
+      _audioPlayer.play();
+    } on Exception {
+      log("Error parsing song");
+    }
+  }
+
+  @override
   void initState() {
     // TODO: implement initState
     super.initState();
     requestPermission();
   }
 
-  void requestPermission(){
+  void requestPermission() {
     Permission.storage.request();
-    
   }
-  
-  
-  final _audioQuery = new OnAudioQuery();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -36,15 +50,13 @@ class _HomeScreenState extends State<HomeScreen> {
           gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.purple, Colors.orange])),
+              colors: [Colors.purple, Colors.blue])),
       child: Scaffold(
         backgroundColor: Colors.transparent,
 
         //drawer part
 
-
         drawer: Drawer(
-
           child: ListView(
             padding: EdgeInsets.zero,
 
@@ -75,9 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-       
-       
-      //appbar section
+
+        //appbar section
 
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -94,10 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        
-        
-        
-        
+
         body: Container(
             child: Column(
           children: <Widget>[
@@ -124,51 +132,61 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 40,
             ),
 
-          //main logic starts  here 
+            //main logic starts  here
 
             Expanded(
                 child: FutureBuilder<List<SongModel>>(
-                  future: _audioQuery.querySongs(
-                    sortType: null,
-                    orderType: OrderType.ASC_OR_SMALLER,
-                    uriType: UriType.EXTERNAL,
-                    ignoreCase: true
-                  ),
-                  builder: (context, item){
-                    if(item.data ==null){
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    if(item.data!.isEmpty){
-                      return Center(child: Text("No songs found"));
-                    }
-                    return ListView.builder(
-                      itemCount: item.data!.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(0.0),
-                          child: Card(
-                            color: Colors.transparent,
-                            elevation: 3.0,
-                            child: ListTile(
-                              title: Text(
-                                item.data![index].displayNameWOExt,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              subtitle: Text(
-                                "${item.data![index].artist}",
-                                style: TextStyle(
-                                    color: Color.fromARGB(255, 184, 183, 183)),
-                              ),
-                              leading: Icon(Icons.music_note),
-                              trailing: Icon(Icons.more_horiz),
+              future: _audioQuery.querySongs(
+                  sortType: null,
+                  orderType: OrderType.ASC_OR_SMALLER,
+                  uriType: UriType.EXTERNAL,
+                  ignoreCase: true),
+              builder: (context, item) {
+                if (item.data == null) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                if (item.data!.isEmpty) {
+                  return Center(child: Text("No songs found"));
+                }
+                return ListView.builder(
+                    itemCount: item.data!.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.all(0.0),
+                        child: Card(
+                          color: Colors.transparent,
+                          elevation: 3.0,
+                          child: ListTile(
+                            title: Text(
+                              item.data![index].displayNameWOExt,
+                              style: TextStyle(color: Colors.white),
                             ),
+                            subtitle: Text(
+                              "${item.data![index].artist}",
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 184, 183, 183)),
+                            ),
+                            leading: Icon(Icons.music_note),
+                            trailing: Icon(Icons.more_horiz),
+                            onTap: () {
+                              // playSongs(item.data![index].uri);
+
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => PlayScreen(
+                                            songModel: item.data![index],
+                                            audioPlayer: _audioPlayer,
+                                          )));
+                            },
                           ),
-                        );
-                      });
-                  },
-                ))
+                        ),
+                      );
+                    });
+              },
+            ))
           ],
         )),
       ),

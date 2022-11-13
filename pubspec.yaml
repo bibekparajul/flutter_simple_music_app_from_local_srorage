@@ -40,6 +40,7 @@ dependencies:
   scaffold_gradient_background: ^1.0.3+1
   on_audio_query: ^2.6.1
   permission_handler: ^10.2.0
+  just_audio: ^0.9.30
   
 
 dev_dependencies:
